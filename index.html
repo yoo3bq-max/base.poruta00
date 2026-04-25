@@ -4,74 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cosmic Message App</title>
-    <style>
-        /* CSS: スタイリング */
-        body, html {
-            margin: 0; padding: 0; width: 100%; height: 100%;
-            overflow: hidden; background-color: #000003;
-            color: white; font-family: sans-serif;
-        }
-
-        #bg-container {
-            position: absolute; inset: 0; z-index: 0; opacity: 0.6;
-            background-image: url('https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&q=80&w=2048');
-            background-size: cover; background-position: center;
-            filter: blur(0.5px) brightness(0.45);
-        }
-
-        #message-stream {
-            position: absolute; inset: 0; z-index: 30; pointer-events: none;
-        }
-
-        .message-node {
-            position: absolute; transform: translate(-50%, -50%);
-            display: flex; flex-direction: column; align-items: center;
-            transition: opacity 0.5s ease;
-        }
-
-        .meta-info {
-            display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
-            padding: 2px 8px; background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(10px); border-radius: 999px;
-            border: 1px solid rgba(255,255,255,0.05);
-        }
-
-        .message-bubble {
-            padding: 12px 20px; border-radius: 1.2rem; border: 1px solid rgba(255,255,255,0.1);
-            background: rgba(0,0,0,0.3); max-width: 220px; word-wrap: break-word;
-            text-align: center; font-size: 11px; letter-spacing: 0.12em;
-        }
-
-        .ui-overlay {
-            position: absolute; top: 24px; left: 24px; z-index: 50;
-            opacity: 0.6; background: rgba(0,0,0,0.4); padding: 6px 12px;
-            border-radius: 8px; backdrop-filter: blur(20px);
-        }
-
-        #input-form {
-            position: absolute; bottom: 48px; left: 0; right: 0;
-            z-index: 50; display: flex; justify-content: center;
-        }
-
-        .input-container {
-            width: 260px; background: rgba(0,0,0,0.6); border-radius: 999px;
-            border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(30px);
-        }
-
-        input {
-            width: 100%; background: transparent; border: none; outline: none;
-            color: white; padding: 16px; text-align: center;
-            letter-spacing: 0.4em; font-size: 9px; text-transform: uppercase;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body onclick="initAudio()">
 
     <div id="bg-container"></div>
+    
     <div id="message-stream"></div>
 
     <div class="ui-overlay">
-        <span id="visitor-count" style="font-size: 7px; font-weight: bold; letter-spacing: 0.2em;">ACTIVE_NODES: ---</span>
+        <div class="status-dot"></div>
+        <span id="visitor-count">ACTIVE_NODES: ---</span>
     </div>
 
     <form id="input-form">
@@ -80,143 +23,6 @@
         </div>
     </form>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, query, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-        // --- 設定をここに貼り付けてください ---
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT_ID.appspot.com",
-            messagingSenderId: "YOUR_ID",
-            appId: "YOUR_APP_ID"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = 'cosmic-message-app';
-
-        let user = null;
-        let messages = [];
-        let time = 0;
-        let audioCtx = null;
-
-        // --- オーディオエンジン ---
-        window.initAudio = () => {
-            if (audioCtx) return;
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            audioCtx = new AudioContext();
-            const masterGain = audioCtx.createGain();
-            masterGain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-            masterGain.connect(audioCtx.destination);
-
-            const createDrone = (freq) => {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-                gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-                osc.connect(gain); gain.connect(masterGain);
-                osc.start();
-            };
-            createDrone(60); createDrone(90);
-        };
-
-        // --- ID生成 ---
-        const generateId = (uid) => {
-            const prefixes = ["NOVA", "VOYAGER", "ORION", "STELLAR"];
-            const index = uid ? uid.charCodeAt(0) % prefixes.length : 0;
-            return `${prefixes[index]}-${uid?.substring(0,4).toUpperCase() || '????'}`;
-        };
-
-        // --- Auth & Firestore ---
-        signInAnonymously(auth).catch(console.error);
-        onAuthStateChanged(auth, u => user = u);
-
-        const msgCol = collection(db, 'artifacts', appId, 'public', 'data', 'messages');
-        onSnapshot(msgCol, (snapshot) => {
-            document.getElementById('visitor-count').innerText = `ACTIVE_NODES: ${snapshot.size + 1069}`;
-            snapshot.docChanges().forEach(change => {
-                if (change.type === "added") {
-                    const data = change.doc.data();
-                    messages.push({
-                        id: change.doc.id,
-                        text: data.text,
-                        userId: data.userId,
-                        x: 20 + Math.random() * 60,
-                        y: 105,
-                        v: -0.012 - Math.random() * 0.006,
-                        phase: Math.random() * Math.PI * 2,
-                        opacity: 0,
-                        element: null
-                    });
-                }
-            });
-        });
-
-        // --- アニメーションループ ---
-        function animate() {
-            time += 0.005;
-            const container = document.getElementById('message-stream');
-            const bg = document.getElementById('bg-container');
-
-            bg.style.transform = `scale(${1.25 + Math.sin(time * 0.02) * 0.03}) translate(${Math.cos(time * 0.04) * 15}px, ${Math.sin(time * 0.04) * 8}px)`;
-
-            messages.forEach((msg, index) => {
-                msg.y += msg.v;
-                const dX = msg.x + Math.sin(time * 0.2 + msg.phase) * 3;
-                const dY = msg.y + Math.cos(time * 0.2 + msg.phase) * 2;
-
-                if (msg.y > 10) msg.opacity = Math.min(1, msg.opacity + 0.01);
-                if (msg.y < 5) msg.opacity = Math.max(0, msg.opacity - 0.01);
-
-                if (!msg.element) {
-                    msg.element = document.createElement('div');
-                    msg.element.className = 'message-node';
-                    msg.element.innerHTML = `
-                        <div class="meta-info">
-                            <span style="font-size:6px; font-family:monospace; color:cyan;">${generateId(msg.userId)}</span>
-                        </div>
-                        <div class="message-bubble">${msg.text}</div>
-                    `;
-                    container.appendChild(msg.element);
-                }
-
-                msg.element.style.left = dX + '%';
-                msg.element.style.top = dY + '%';
-                msg.element.style.opacity = msg.opacity;
-            });
-
-            // 画面外（上部）に消えたメッセージの削除
-            messages = messages.filter(m => {
-                if (m.y < -10) {
-                    m.element.remove();
-                    return false;
-                }
-                return true;
-            });
-
-            requestAnimationFrame(animate);
-        }
-        requestAnimationFrame(animate);
-
-        // --- 送信処理 ---
-        document.getElementById('input-form').onsubmit = async (e) => {
-            e.preventDefault();
-            const input = document.getElementById('message-input');
-            if (!input.value.trim() || !user) return;
-
-            await addDoc(msgCol, {
-                text: input.value,
-                userId: user.uid,
-                createdAt: serverTimestamp()
-            });
-            input.value = '';
-        };
-    </script>
+    <script type="module" src="script.js"></script>
 </body>
 </html>
