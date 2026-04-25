@@ -3,7 +3,7 @@ import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gsta
 import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // --- Firebase Configuration (ご自身のものに差し替えてください) ---
-const firebaseConfig {
+const firebaseConfig= {
   apiKey: "AIzaSyAkmxcg0LykyxIlBnvJQIiiPI_H8Dy_koM",
   authDomain: "universal-8d7eb.firebaseapp.com",
   projectId: "universal-8d7eb",
@@ -12,7 +12,6 @@ const firebaseConfig {
   appId: "1:242890668753:web:a94bf7f0eecf6f4efda3f0",
   measurementId: "G-KHLCH9QYEZ"
 };
-
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
