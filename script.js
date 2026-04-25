@@ -3,7 +3,7 @@ import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gsta
 import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // --- Firebase Configuration (ご自身のものに差し替えてください) ---
-const firebaseConfig= {
+const firebaseConfig={
   apiKey: "AIzaSyAkmxcg0LykyxIlBnvJQIiiPI_H8Dy_koM",
   authDomain: "universal-8d7eb.firebaseapp.com",
   projectId: "universal-8d7eb",
