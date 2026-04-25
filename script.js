@@ -3,13 +3,14 @@ import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gsta
 import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // --- Firebase Configuration (ご自身のものに差し替えてください) ---
-const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    projectId: "YOUR_PROJECT",
-    storageBucket: "YOUR_PROJECT.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
+const firebaseConfig {
+  apiKey: "AIzaSyAkmxcg0LykyxIlBnvJQIiiPI_H8Dy_koM",
+  authDomain: "universal-8d7eb.firebaseapp.com",
+  projectId: "universal-8d7eb",
+  storageBucket: "universal-8d7eb.firebasestorage.app",
+  messagingSenderId: "242890668753",
+  appId: "1:242890668753:web:a94bf7f0eecf6f4efda3f0",
+  measurementId: "G-KHLCH9QYEZ"
 };
 
 const app = initializeApp(firebaseConfig);
